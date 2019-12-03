@@ -13,7 +13,7 @@ all: $(PROG)
 clean: 
 	$(RM) $(PROG) *.o $(OUTDIR)/*
 
-run:
+run: $(PROG)
 	./$(PROG) || { echo "$(PROG) failed"; exit 1; };
 
 %.o: %.f90

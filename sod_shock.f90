@@ -2,8 +2,8 @@ program sodShock
 
         implicit none
         !Parameters and variables
-        double precision, parameter :: tubeHalfLength = 1.0, Y = 1.4
-        double precision, parameter :: Tfinal = 100.0  !This needs to be made clear
+        double precision, parameter :: tubeHalfLength = 10.0, Y = 1.4
+        double precision, parameter :: Tfinal = 0.01  !This needs to be made clear
         double precision :: ul, ur, pl, pr, rhol, rhor, El, Er
         double precision, allocatable, dimension(:) :: u, rho, E, p, x, unew, rhonew, Enew, pnew
         double precision, allocatable, dimension(:) :: mflux, vflux, eflux
@@ -11,9 +11,9 @@ program sodShock
         double precision :: xl, xr, dx, dt, t
 
 
-        dx = 0.1 !This needs to be made clear
+        dx = 0.4 !This needs to be made clear
 
-        dt = 0.01 !This needs to be made clear
+        dt = 4.276e-4 !This needs to be made clear
 
         xl = -1.0*tubeHalfLength
         xr = tubeHalfLength
@@ -99,11 +99,11 @@ program sodShock
                 !Space derivative discretization
                 mflux = (rho(2:ncv)*u(2:ncv) - rho(1:N+1)*u(1:N+1))/dx
                 vflux = ((rho(2:ncv)*u(2:ncv)**2 + p(2:ncv)) - (rho(1:ncv-1)*u(1:ncv-1)**2 + p(1:ncv-1)))/dx
-                eflux = ((E(2:ncv)*u(2:ncv) - p(2:ncv)*u(2:ncv)) - (E(1:ncv-1)*u(1:ncv-1) - p(1:ncv-1)*u(1:ncv-1)))/dx
+                eflux = ((E(2:ncv)*u(2:ncv) + p(2:ncv)*u(2:ncv)) - (E(1:ncv-1)*u(1:ncv-1) + p(1:ncv-1)*u(1:ncv-1)))/dx
 
 
                 rhonew(2:ncv-1) = rho(2:ncv-1) + dt*(mflux)
-                unew(2:ncv-1) = (mflux + dt*vflux)/rhonew(2:ncv-1) !What if we divide by zero here?
+                unew(2:ncv-1) = (rho(2:ncv-1)*u(2:ncv-1) + dt*vflux)/rhonew(2:ncv-1) !What if we divide by zero here?
                 Enew(2:ncv-1) = E(2:ncv-1) + dt*(eflux)
                 pnew(2:ncv-1) = (Y-1)*(Enew(2:ncv-1) + 0.5*rhonew(2:ncv-1)*unew(2:ncv-1)**2)
 
@@ -112,12 +112,17 @@ program sodShock
                 u = unew
                 E = Enew
                 p = pnew
-                
+               
+                !Check for solution divergence
+                if (maxval(abs(rho)) .ge. 10) stop 'Solution diverging!'
                 
                 !Writing data
-                call writeData(iter, x, u(2:ncv-1), p(2:ncv-1), rho(2:ncv-1), N)
+                if (mod(iter,1) .le. 1e-15) then
+                        call writeData(iter, x, u(2:ncv-1), p(2:ncv-1), rho(2:ncv-1), N)
+                end if
                 iter = iter+1
                 t = t + dt
+                print *,'Time= ',t
 
         end do
         print *,'Finished!'
@@ -138,7 +143,7 @@ contains
                 character(21) :: filename
                 write(filename, '(a,i0.6,a)') 'fortran_op/', timeStep, '.txt'
                 open(1, file=filename, status='new')
-                write(1, *) 'x ', 'velocity ', 'rho ', 'pressure '
+                write(1, *) 'x ', 'v ', 'rho ', 'p '
                 do i=1,N
                         write(1, *) x(i), u(i), rho(i), p(i)
                 end do
