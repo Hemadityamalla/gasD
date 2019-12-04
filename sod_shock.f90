@@ -13,7 +13,7 @@ program sodShock
 
         dx = 0.4 !This needs to be made clear
 
-        dt = 4.276e-4 !This needs to be made clear
+        dt = 4.276e-5 !This needs to be made clear
 
         xl = -1.0*tubeHalfLength
         xr = tubeHalfLength
@@ -102,10 +102,10 @@ program sodShock
                 eflux = ((E(2:ncv)*u(2:ncv) + p(2:ncv)*u(2:ncv)) - (E(1:ncv-1)*u(1:ncv-1) + p(1:ncv-1)*u(1:ncv-1)))/dx
 
 
-                rhonew(2:ncv-1) = rho(2:ncv-1) + dt*(mflux)
-                unew(2:ncv-1) = (rho(2:ncv-1)*u(2:ncv-1) + dt*vflux)/rhonew(2:ncv-1) !What if we divide by zero here?
-                Enew(2:ncv-1) = E(2:ncv-1) + dt*(eflux)
-                pnew(2:ncv-1) = (Y-1)*(Enew(2:ncv-1) + 0.5*rhonew(2:ncv-1)*unew(2:ncv-1)**2)
+                rhonew(2:ncv-1) = rho(2:ncv-1) - dt*(mflux)
+                unew(2:ncv-1) = (rho(2:ncv-1)*u(2:ncv-1) - dt*vflux)/rhonew(2:ncv-1) !What if we divide by zero here?
+                Enew(2:ncv-1) = E(2:ncv-1) - dt*(eflux)
+                pnew(2:ncv-1) = (Y-1)*(Enew(2:ncv-1) - 0.5*rhonew(2:ncv-1)*unew(2:ncv-1)**2)
 
                 !Updating variables
                 rho = rhonew
