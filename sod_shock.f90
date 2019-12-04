@@ -147,8 +147,16 @@ contains
                 double precision, dimension(N+nghost), intent(in) :: u, p, E, rho
                 double precision, intent(in) :: dx
                 double precision, dimension(N), intent(out) :: mflux, vflux, eflux
-                integer :: ncv
+                double precision, dimension(N+1) :: mf, vf, ef
+                double precision, parameter :: eps = 1e-10
+                integer :: ncv, i
                 ncv = N + nghost
+
+
+                do i=1,N+1
+
+                        thetar = 
+                end do
                 mflux = (rho(3:ncv)*u(3:ncv) - rho(1:N)*u(1:N))/dx
                 vflux = ((rho(3:ncv)*u(3:ncv)**2 + p(3:ncv)) - (rho(1:N)*u(1:N)**2 + p(1:N)))/dx
                 eflux = ((E(3:ncv)*u(3:ncv) + p(3:ncv)*u(3:ncv)) - (E(1:N)*u(1:N) + p(1:N)*u(1:N)))/dx
@@ -176,5 +184,22 @@ contains
 
                 computePressure = rho*(Y - 1)*(e - 0.5*rho*u**2)
         end function computePressure
+
+
+        function phi(r)
+                implicit none
+                double precision, intent(in) :: r
+                double precision :: phi
+                phi = 0.0 !Upwind 
+                !phi = 1.0 !Lax-Wendroff
+                !phi = r !Beam-Warming
+                !phi = 0.5*(1.0 + r) !Fromm
+                
+                !phi = (r + abs(r))/(1 + abs(r)) !van Leer
+                !phi = maxval((/0.0, min(1.0, 2*r), min(2.0, r)/)) !supberbee
+                !phi = int(r .gt. 0.0)*min(r, 1.0) + int(r .le. 0.0)*0.0 !minmod
+                !phi = max(0.0, min(1.0/3.0 + r/6.0, r)) !koren
+
+        end function phi
 
 end program sodShock
