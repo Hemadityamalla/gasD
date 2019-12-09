@@ -2,8 +2,8 @@ program sodShock
 
         implicit none
         !Parameters and variables
-        double precision, parameter :: tubeHalfLength = 5.0, Y = 1.4
-        double precision, parameter :: Tfinal = 7e-3  !This needs to be made clear
+        double precision, parameter :: tubeHalfLength = 10.0, Y = 1.4
+        double precision, parameter :: Tfinal = 0.01  !This needs to be made clear
         double precision :: ul, ur, pl, pr, rhol, rhor, El, Er
         double precision, allocatable, dimension(:) :: u, rho, E, p, x, unew, rhonew, Enew, pnew
         double precision, allocatable, dimension(:) :: mflux, vflux, eflux
@@ -11,9 +11,9 @@ program sodShock
         double precision :: xl, xr, dx, dt, t
 
 
-        dx = 0.025 !This needs to be made clear
+        dx = 0.1
 
-        dt = (dx*0.1)/375.0 !This setting is based on the sound speed and a courant number of 0.2
+        dt = (dx*0.3)/375.0 !This setting is based on the sound speed and a courant number of 0.2
 
         xl = -1.0*tubeHalfLength
         xr = tubeHalfLength
@@ -96,7 +96,7 @@ program sodShock
                 rhonew(2:ncv-1) = 0.5*(rho(3:ncv) + rho(1:N)) - 0.5*dt*(mflux)
                 unew(2:ncv-1) = (0.5*(rho(3:ncv)*u(3:ncv) + rho(1:N)*u(1:N)) - 0.5*dt*vflux)/rhonew(2:ncv-1) !What if we divide by zero here?
                 Enew(2:ncv-1) = 0.5*(E(1:ncv) + E(1:N)) - 0.5*dt*(eflux)
-                pnew(2:ncv-1) = computePressure(Enew(2:ncv-1), rhonew(2:ncv-1), unew(2:ncv-1), Y, size(unew(2:ncv-1)))!rhonew(2:ncv-1)*(Y-1)*(Enew(2:ncv-1) - 0.5*rhonew(2:ncv-1)*unew(2:ncv-1)**2)
+                pnew(2:ncv-1) = computePressure(Enew(2:ncv-1), rhonew(2:ncv-1), unew(2:ncv-1), Y, size(unew(2:ncv-1)))
 
                 !Updating variables
                 rho = rhonew
@@ -108,7 +108,7 @@ program sodShock
                 if (maxval(abs(rho)) .ge. 10) stop 'Solution diverging!'
                 
                 !Writing data
-                if (mod(iter,20) .le. 1e-15) then
+                if (mod(iter,2) .le. 1e-15) then
                         call writeData(iter, x, u(2:ncv-1), p(2:ncv-1), rho(2:ncv-1), E(2:ncv-1), N)
                 end if
                 iter = iter+1
@@ -147,19 +147,23 @@ contains
                 double precision, dimension(N+nghost), intent(in) :: u, p, E, rho
                 double precision, intent(in) :: dx
                 double precision, dimension(N), intent(out) :: mflux, vflux, eflux
-                double precision, dimension(N+1) :: mf, vf, ef
                 double precision, parameter :: eps = 1e-10
                 integer :: ncv, i
+                integer :: rstart, rend, lstart, lend
                 ncv = N + nghost
+                
+                rstart = 3
+                rend = ncv
+                lstart = 1
+                lend = N
 
-
-                do i=1,N+1
-
-                        thetar = 
-                end do
-                mflux = (rho(3:ncv)*u(3:ncv) - rho(1:N)*u(1:N))/dx
-                vflux = ((rho(3:ncv)*u(3:ncv)**2 + p(3:ncv)) - (rho(1:N)*u(1:N)**2 + p(1:N)))/dx
-                eflux = ((E(3:ncv)*u(3:ncv) + p(3:ncv)*u(3:ncv)) - (E(1:N)*u(1:N) + p(1:N)*u(1:N)))/dx
+                mflux = (rho(rstart:rend)*u(rstart:rend) - rho(lstart:lend)*u(lstart:lend))/dx
+                
+                vflux = ((rho(rstart:rend)*u(rstart:rend)**2 + p(rstart:rend)) - &
+                	(rho(lstart:lend)*u(lstart:lend)**2 + p(lstart:lend)))/dx
+                	
+                eflux = ((E(rstart:rend)*u(rstart:rend) + p(rstart:rend)*u(rstart:rend)) - &
+                	(E(lstart:lend)*u(lstart:lend) + p(lstart:lend)*u(lstart:lend)))/dx
 
 
         end subroutine computeFluxes
